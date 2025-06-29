@@ -26,17 +26,20 @@ API REST com CRUD de usuários, integração com BetterStack para logs, document
 ## 🛠️ Configuração Local
 
 ### 1. Clone o repositório
+
 ```bash
 git clone <seu-repositorio>
 cd api-integracao
 ```
 
 ### 2. Instale as dependências
+
 ```bash
 npm install
 ```
 
 ### 3. Configure as variáveis de ambiente
+
 Crie um arquivo `.env` na raiz do projeto:
 
 ```env
@@ -53,11 +56,13 @@ PORT=3000
 ```
 
 ### 4. Execute com Docker Compose (Recomendado)
+
 ```bash
 npm run docker:compose
 ```
 
 ### 5. Ou execute localmente
+
 ```bash
 npm run dev
 ```
@@ -65,16 +70,19 @@ npm run dev
 ## 🐳 Docker
 
 ### Build da imagem
+
 ```bash
 npm run docker:build
 ```
 
 ### Executar container
+
 ```bash
 npm run docker:run
 ```
 
 ### Docker Compose (Backend + PostgreSQL)
+
 ```bash
 npm run docker:compose
 ```
@@ -82,11 +90,13 @@ npm run docker:compose
 ## 📚 Endpoints da API
 
 ### Base
+
 - `GET /` - Informações da API
 - `GET /health` - Health check
 - `GET /api-docs` - Documentação Swagger
 
 ### Usuários (CRUD)
+
 - `GET /usuarios` - Listar todos os usuários
 - `GET /usuarios/:id` - Buscar usuário por ID
 - `POST /usuarios` - Criar usuário
@@ -94,11 +104,13 @@ npm run docker:compose
 - `DELETE /usuarios/:id` - Deletar usuário
 
 ### Logs
+
 - `GET /test-log` - Testar integração com BetterStack
 
 ## 🔧 Configuração do CI/CD
 
 ### 1. GitHub Secrets
+
 Configure os seguintes secrets no seu repositório GitHub:
 
 ```
@@ -115,16 +127,19 @@ NOTIFICATION_EMAIL=email_para_notificacoes
 ```
 
 ### 2. Docker Hub
+
 - Crie um repositório no Docker Hub com o mesmo nome do repositório GitHub
 - Configure as credenciais no GitHub Secrets
 
 ### 3. Render
+
 - Crie um novo Web Service
 - Configure para usar Docker
 - Configure as variáveis de ambiente
 - Obtenha o Service ID e API Key
 
 ### 4. BetterStack
+
 - Crie um novo source para logs
 - Configure a URL e token
 - Adicione as credenciais no GitHub Secrets
@@ -134,6 +149,7 @@ NOTIFICATION_EMAIL=email_para_notificacoes
 O pipeline inclui as seguintes etapas:
 
 ### CI (Continuous Integration)
+
 - ✅ Checkout do código
 - ✅ Instalação de dependências
 - ✅ Build da aplicação
@@ -141,6 +157,7 @@ O pipeline inclui as seguintes etapas:
 - ✅ Build da imagem Docker
 
 ### CD (Continuous Deployment)
+
 - ✅ Push da imagem para Docker Hub
 - ✅ Criação da tag Latest
 - ✅ Atualização de variáveis no Render
@@ -150,12 +167,14 @@ O pipeline inclui as seguintes etapas:
 ## 📊 Logs e Monitoramento
 
 ### BetterStack
+
 - Logs estruturados de todas as requisições
 - Métricas de performance
 - Alertas configuráveis
 - Dashboard em tempo real
 
 ### Winston
+
 - Logs locais em arquivos
 - Rotação automática
 - Diferentes níveis de log
@@ -163,6 +182,7 @@ O pipeline inclui as seguintes etapas:
 ## 🧪 Testes
 
 ### Teste local
+
 ```bash
 # Teste a API
 curl http://localhost:3000/health
@@ -177,6 +197,7 @@ curl http://localhost:3000/test-log
 ```
 
 ### Teste com Docker
+
 ```bash
 # Execute os testes
 docker-compose up --build
@@ -215,6 +236,7 @@ chore: tarefas de manutenção
 ## 📈 Monitoramento
 
 ### Métricas coletadas
+
 - Tempo de resposta das requisições
 - Taxa de erro
 - Uso de recursos
@@ -222,6 +244,7 @@ chore: tarefas de manutenção
 - Health checks
 
 ### Alertas
+
 - Falhas no pipeline CI/CD
 - Erros na aplicação
 - Tempo de resposta alto
@@ -250,3 +273,7 @@ Este projeto está sob a licença ISC.
 - Render pela hospedagem
 - BetterStack pelos logs
 - Docker pela containerização
+
+## Teste Gitflow
+
+Esta linha foi adicionada para testar o fluxo Gitflow e criação de tags.
