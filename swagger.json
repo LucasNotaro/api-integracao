@@ -1,0 +1,354 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API P2 - Integração e Entrega Contínua",
+    "version": "1.0.0",
+    "description": "API REST com CRUD de usuários, integração com BetterStack e documentação Swagger"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor de desenvolvimento"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Informações da API",
+        "description": "Retorna informações sobre a API e endpoints disponíveis",
+        "responses": {
+          "200": {
+            "description": "Informações da API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "version": { "type": "string" },
+                    "environment": { "type": "string" },
+                    "endpoints": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Verifica o status da API",
+        "responses": {
+          "200": {
+            "description": "API funcionando",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "timestamp": { "type": "string" },
+                    "environment": { "type": "string" },
+                    "version": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usuarios": {
+      "get": {
+        "summary": "Listar usuários",
+        "description": "Retorna todos os usuários cadastrados",
+        "responses": {
+          "200": {
+            "description": "Lista de usuários",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "nome": { "type": "string" },
+                      "email": { "type": "string" },
+                      "created_at": { "type": "string", "format": "date-time" },
+                      "updated_at": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar usuário",
+        "description": "Cria um novo usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": { 
+                    "type": "string",
+                    "description": "Nome do usuário"
+                  },
+                  "email": { 
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email do usuário"
+                  }
+                },
+                "required": ["nome", "email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "usuario": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer" },
+                        "nome": { "type": "string" },
+                        "email": { "type": "string" },
+                        "created_at": { "type": "string", "format": "date-time" },
+                        "updated_at": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "409": {
+            "description": "Email já cadastrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    },
+    "/usuarios/{id}": {
+      "get": {
+        "summary": "Buscar usuário por ID",
+        "description": "Retorna um usuário específico pelo ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID do usuário"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "nome": { "type": "string" },
+                    "email": { "type": "string" },
+                    "created_at": { "type": "string", "format": "date-time" },
+                    "updated_at": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar usuário",
+        "description": "Atualiza um usuário existente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID do usuário"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": { 
+                    "type": "string",
+                    "description": "Nome do usuário"
+                  },
+                  "email": { 
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email do usuário"
+                  }
+                },
+                "required": ["nome", "email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuário atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "usuario": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer" },
+                        "nome": { "type": "string" },
+                        "email": { "type": "string" },
+                        "created_at": { "type": "string", "format": "date-time" },
+                        "updated_at": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          },
+          "409": {
+            "description": "Email já cadastrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar usuário",
+        "description": "Remove um usuário pelo ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "ID do usuário"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário excluído com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "usuario": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer" },
+                        "nome": { "type": "string" },
+                        "email": { "type": "string" },
+                        "created_at": { "type": "string", "format": "date-time" },
+                        "updated_at": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    },
+    "/test-log": {
+      "get": {
+        "summary": "Teste de logs",
+        "description": "Endpoint para testar a integração com BetterStack",
+        "responses": {
+          "200": {
+            "description": "Log de teste enviado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "environment": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Usuario": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "nome": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  }
+}
