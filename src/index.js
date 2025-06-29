@@ -144,6 +144,57 @@ app.get('/test-log', (req, res) => {
   });
 });
 
+// Endpoint para testar banco de dados
+app.get('/test-db', async (req, res) => {
+  try {
+    const client = await getClient();
+    
+    // Testar conexão
+    await client.query('SELECT NOW()');
+    
+    // Verificar se a tabela existe
+    const tableCheck = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'usuarios'
+      );
+    `);
+    
+    const tableExists = tableCheck.rows[0].exists;
+    
+    if (!tableExists) {
+      // Criar tabela
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS usuarios (
+          id SERIAL PRIMARY KEY,
+          nome VARCHAR(100) NOT NULL,
+          email VARCHAR(100) UNIQUE NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    }
+    
+    await client.end();
+    
+    res.json({ 
+      message: 'Teste de banco de dados',
+      database_connected: true,
+      table_exists: tableExists,
+      table_created: !tableExists,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    winstonLogger.error('Erro no teste de banco:', err);
+    res.status(500).json({ 
+      error: 'Erro no teste de banco de dados',
+      details: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Endpoint de health check
 app.get('/health', (req, res) => {
   res.json({ 
