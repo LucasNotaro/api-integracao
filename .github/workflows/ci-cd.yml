@@ -44,18 +44,54 @@ jobs:
             echo "version=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "tag=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
           else
-            # Versionamento semântico baseado no package.json
-            PACKAGE_VERSION=$(node -p "require('./package.json').version")
+            # Versionamento semântico baseado em commits
+            BASE_VERSION=$(node -p "require('./package.json').version")
+            
+            # Analisar commits desde a última tag para determinar tipo de mudança
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")
+            
+            # Contar tipos de commits
+            BREAKING_CHANGES=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD | grep -c "BREAKING CHANGE" || echo "0")
+            FEATURES=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD | grep -c "^feat:" || echo "0")
+            FIXES=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD | grep -c "^fix:" || echo "0")
+            
+            # Extrair versão atual
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+            
+            # Determinar nova versão baseada nos commits
+            if [ "$BREAKING_CHANGES" -gt 0 ]; then
+              # Breaking changes incrementam MAJOR
+              NEW_MAJOR=$((MAJOR + 1))
+              NEW_MINOR=0
+              NEW_PATCH=0
+            elif [ "$FEATURES" -gt 0 ]; then
+              # Features incrementam MINOR
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$((MINOR + 1))
+              NEW_PATCH=0
+            elif [ "$FIXES" -gt 0 ]; then
+              # Fixes incrementam PATCH
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$MINOR
+              NEW_PATCH=$((PATCH + 1))
+            else
+              # Se não há mudanças semânticas, incrementar PATCH
+              NEW_MAJOR=$MAJOR
+              NEW_MINOR=$MINOR
+              NEW_PATCH=$((PATCH + 1))
+            fi
+            
+            NEW_VERSION="${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
             
             if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              # Em main, usar versão do package.json
-              echo "version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
-              echo "tag=v${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
+              # Em main, usar versão semântica
+              echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+              echo "tag=v${NEW_VERSION}" >> $GITHUB_OUTPUT
             else
               # Em develop, adicionar sufixo de desenvolvimento
               SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-              echo "version=${PACKAGE_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
-              echo "tag=v${PACKAGE_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
+              echo "version=${NEW_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
+              echo "tag=v${NEW_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
             fi
           fi
 
