@@ -37,19 +37,26 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Generate version and tag
+      - name: Generate semantic version
         id: version
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "version=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "tag=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
           else
-            # Gerar versão baseada em timestamp e commit
-            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-            VERSION="v1.0.0-${TIMESTAMP}-${SHORT_SHA}"
-            echo "version=${VERSION}" >> $GITHUB_OUTPUT
-            echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+            # Versionamento semântico baseado no package.json
+            PACKAGE_VERSION=$(node -p "require('./package.json').version")
+            
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              # Em main, usar versão do package.json
+              echo "version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
+              echo "tag=v${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
+            else
+              # Em develop, adicionar sufixo de desenvolvimento
+              SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+              echo "version=${PACKAGE_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
+              echo "tag=v${PACKAGE_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Create Git tag (only on main)
