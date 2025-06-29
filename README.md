@@ -277,3 +277,7 @@ Este projeto está sob a licença ISC.
 ## Teste Gitflow
 
 Esta linha foi adicionada para testar o fluxo Gitflow e criação de tags.
+
+## Teste de Fix
+
+Esta seção foi adicionada para testar o versionamento semântico com commits do tipo "fix".
