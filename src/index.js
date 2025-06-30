@@ -6,6 +6,7 @@ const swaggerDocument = require('../swagger.json');
 const { getClient, initializeDatabase } = require('./database');
 const { loggerMiddleware, winstonLogger } = require('./logger');
 
+// API P2 - Integração e Entrega Contínua - Teste Pipeline
 const app = express();
 
 // Middlewares
