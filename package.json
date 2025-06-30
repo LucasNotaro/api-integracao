@@ -1,6 +1,6 @@
 {
   "name": "api-integracao",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "API P2 - Integração e Entrega Contínua",
   "main": "src/index.js",
   "scripts": {
@@ -16,7 +16,13 @@
     "commit": "git-cz",
     "prepare": "husky install"
   },
-  "keywords": ["api", "nodejs", "postgresql", "betterstack", "docker"],
+  "keywords": [
+    "api",
+    "nodejs",
+    "postgresql",
+    "betterstack",
+    "docker"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
