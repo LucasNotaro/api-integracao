@@ -37,75 +37,80 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Generate semantic version
-        id: version
+      - name: Install semver
+        if: github.ref == 'refs/heads/main'
+        run: npm install -g semver
+
+      - name: Create initial tag if not exists
+        if: github.ref == 'refs/heads/main'
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "version=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "tag=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-          else
-            # Versionamento semântico baseado em commits
-            BASE_VERSION=$(node -p "require('./package.json').version")
-            
-            # Analisar commits desde a última tag para determinar tipo de mudança
-            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")
-            
-            # Contar tipos de commits
-            BREAKING_CHANGES=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD | grep -c "BREAKING CHANGE" || echo "0")
-            FEATURES=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD | grep -c "^feat:" || echo "0")
-            FIXES=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD | grep -c "^fix:" || echo "0")
-            
-            # Extrair versão atual
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
-            
-            # Determinar nova versão baseada nos commits
-            if [ "$BREAKING_CHANGES" -gt 0 ]; then
-              # Breaking changes incrementam MAJOR
-              NEW_MAJOR=$((MAJOR + 1))
-              NEW_MINOR=0
-              NEW_PATCH=0
-            elif [ "$FEATURES" -gt 0 ]; then
-              # Features incrementam MINOR
-              NEW_MAJOR=$MAJOR
-              NEW_MINOR=$((MINOR + 1))
-              NEW_PATCH=0
-            elif [ "$FIXES" -gt 0 ]; then
-              # Fixes incrementam PATCH
-              NEW_MAJOR=$MAJOR
-              NEW_MINOR=$MINOR
-              NEW_PATCH=$((PATCH + 1))
-            else
-              # Se não há mudanças semânticas, incrementar PATCH
-              NEW_MAJOR=$MAJOR
-              NEW_MINOR=$MINOR
-              NEW_PATCH=$((PATCH + 1))
-            fi
-            
-            NEW_VERSION="${NEW_MAJOR}.${NEW_MINOR}.${NEW_PATCH}"
-            
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              # Em main, usar versão semântica
-              echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
-              echo "tag=v${NEW_VERSION}" >> $GITHUB_OUTPUT
-            else
-              # Em develop, adicionar sufixo de desenvolvimento
-              SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-              echo "version=${NEW_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
-              echo "tag=v${NEW_VERSION}-dev.${SHORT_SHA}" >> $GITHUB_OUTPUT
-            fi
+          if [ -z "$(git tag)" ]; then
+            git config --global user.name 'github-actions'
+            git config --global user.email 'github-actions@github.com'
+            git tag -a v0.0.0 -m "Initial release"
+            git push origin v0.0.0
           fi
 
-      - name: Create Git tag (only on main)
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      - name: Calculate and generate new version
+        if: github.ref == 'refs/heads/main'
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          # Verificar se a tag já existe antes de criar
-          if ! git tag -l | grep -q "${{ steps.version.outputs.tag }}"; then
-            git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
-            git push origin ${{ steps.version.outputs.tag }}
+          # Fetch tags
+          git fetch --tags
+
+          # Get last tag
+          LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="v0.0.0"
+          fi
+
+          echo "Última tag: $LAST_TAG"
+
+          # Get commits since last tag
+          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
+
+          # Initialize version increment flags
+          MAJOR=0
+          MINOR=0
+          PATCH=0
+
+          # Analyze commit messages
+          for COMMIT in "$COMMITS"; do
+            if [[ "$COMMIT" == *"BREAKING CHANGE"* ]]; then
+              MAJOR=1
+            elif [[ "$COMMIT" == *"feat"* ]]; then
+              MINOR=1
+            elif [[ "$COMMIT" == *"fix"* ]]; then
+              PATCH=1
+            fi
+          done
+
+          # Calculate new version
+          CURRENT_VERSION=${LAST_TAG#v}
+          NEW_VERSION=$CURRENT_VERSION
+
+          if [[ $MAJOR -eq 1 ]]; then
+            NEW_VERSION=$(semver -i major $CURRENT_VERSION)
+          elif [[ $MINOR -eq 1 ]]; then
+            NEW_VERSION=$(semver -i minor $CURRENT_VERSION)
+          elif [[ $PATCH -eq 1 ]]; then
+            NEW_VERSION=$(semver -i patch $CURRENT_VERSION)
+          fi
+
+          echo "Nova versão: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Update package.json version
+        if: github.ref == 'refs/heads/main' && env.new_version != ''
+        run: |
+          CURRENT_PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "Versão atual no package.json: $CURRENT_PKG_VERSION"
+          echo "Nova versão calculada: ${{ env.new_version }}"
+
+          if [[ "$CURRENT_PKG_VERSION" != "${{ env.new_version }}" ]]; then
+            npm version ${{ env.new_version }} --no-git-tag-version
+            echo "Versão atualizada com sucesso!"
           else
-            echo "Tag ${{ steps.version.outputs.tag }} already exists, skipping..."
+            echo "Versão já está atualizada, pulando..."
           fi
 
       - name: Set up Docker Buildx
@@ -117,24 +122,53 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (Production)
+        if: github.ref == 'refs/heads/main' && env.new_version != ''
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.new_version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push Docker image (Development)
+        if: github.ref == 'refs/heads/develop'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Deploy to Render (Production - only from main)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.new_version != ''
         run: |
           curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
             -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{
               "clearCache": "do_not_clear",
-              "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+              "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.new_version }}"
             }'
+
+      - name: Commit and push new version
+        if: github.ref == 'refs/heads/main' && env.new_version != ''
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+
+          # Verificar se há mudanças no package.json
+          if git diff --quiet package.json; then
+            echo "Nenhuma mudança no package.json, pulando commit..."
+          else
+            git add package.json
+            git commit -m "chore(release): version ${{ env.new_version }}"
+            git tag v${{ env.new_version }}
+            git push origin main --tags
+          fi
