@@ -69,7 +69,7 @@ jobs:
           COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
           
           # Se não há commits novos, não precisa de nova versão
-          if [ -z "$COMMITS" ]; then
+          if [ -z "$COMMITS" ] || [ "$COMMITS" = "" ]; then
             echo "Nenhum commit novo desde $LAST_TAG"
             echo "new_version=" >> $GITHUB_ENV
             exit 0
@@ -109,6 +109,14 @@ jobs:
           fi
 
           echo "Nova versão calculada: $NEW_VERSION"
+          
+          # Verifica se a tag já existe antes de definir a nova versão
+          if git tag -l "v$NEW_VERSION" | grep -q "v$NEW_VERSION"; then
+            echo "Tag v$NEW_VERSION já existe, não criando nova versão"
+            echo "new_version=" >> $GITHUB_ENV
+            exit 0
+          fi
+          
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Update package.json version
@@ -174,6 +182,12 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
+
+          # Verifica se a tag já existe
+          if git tag -l "v${{ env.new_version }}" | grep -q "v${{ env.new_version }}"; then
+            echo "Tag v${{ env.new_version }} já existe, pulando criação..."
+            exit 0
+          fi
 
           if git diff --quiet package.json; then
             echo "Nenhuma mudança no package.json, pulando commit..."
