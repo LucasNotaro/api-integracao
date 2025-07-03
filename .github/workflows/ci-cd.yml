@@ -41,40 +41,49 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: npm install -g semver
 
-      - name: Create initial tag if not exists
+      - name: Fetch tags
         if: github.ref == 'refs/heads/main'
-        run: |
-          if [ -z "$(git tag)" ]; then
-            git config --global user.name 'github-actions'
-            git config --global user.email 'github-actions@github.com'
-            git tag -a v0.0.0 -m "Initial release"
-            git push origin v0.0.0
-          fi
+        run: git fetch --tags
 
       - name: Calculate and generate new version
         if: github.ref == 'refs/heads/main'
         run: |
-          # Fetch tags
           git fetch --tags
-
-          # Get last tag
-          LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          
+          # Busca a última tag existente
+          LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "")
+          
+          # Se não há tags, define como v0.0.0 e marca como primeira versão
           if [ -z "$LAST_TAG" ]; then
-            LAST_TAG="v0.0.0"
+            echo "Nenhuma tag encontrada, esta é a primeira versão"
+            echo "is_first_version=true" >> $GITHUB_ENV
+            echo "new_version=0.1.0" >> $GITHUB_ENV
+            echo "Nova versão (primeira): 0.1.0"
+            exit 0
           fi
 
-          echo "Última tag: $LAST_TAG"
+          echo "Última tag encontrada: $LAST_TAG"
+          echo "is_first_version=false" >> $GITHUB_ENV
 
-          # Get commits since last tag
+          # Busca commits desde a última tag
           COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
+          
+          # Se não há commits novos, não precisa de nova versão
+          if [ -z "$COMMITS" ]; then
+            echo "Nenhum commit novo desde $LAST_TAG"
+            echo "new_version=" >> $GITHUB_ENV
+            exit 0
+          fi
 
-          # Initialize version increment flags
+          echo "Commits desde $LAST_TAG:"
+          echo "$COMMITS"
+
           MAJOR=0
           MINOR=0
           PATCH=0
 
-          # Analyze commit messages
-          for COMMIT in "$COMMITS"; do
+          # Analisa os commits para determinar o tipo de versão
+          while IFS= read -r COMMIT; do
             if [[ "$COMMIT" == *"BREAKING CHANGE"* ]]; then
               MAJOR=1
             elif [[ "$COMMIT" == *"feat"* ]]; then
@@ -82,9 +91,8 @@ jobs:
             elif [[ "$COMMIT" == *"fix"* ]]; then
               PATCH=1
             fi
-          done
+          done <<< "$COMMITS"
 
-          # Calculate new version
           CURRENT_VERSION=${LAST_TAG#v}
           NEW_VERSION=$CURRENT_VERSION
 
@@ -94,9 +102,13 @@ jobs:
             NEW_VERSION=$(semver -i minor $CURRENT_VERSION)
           elif [[ $PATCH -eq 1 ]]; then
             NEW_VERSION=$(semver -i patch $CURRENT_VERSION)
+          else
+            echo "Nenhuma mudança significativa encontrada nos commits"
+            echo "new_version=" >> $GITHUB_ENV
+            exit 0
           fi
 
-          echo "Nova versão: $NEW_VERSION"
+          echo "Nova versão calculada: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Update package.json version
@@ -163,7 +175,6 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
 
-          # Verificar se há mudanças no package.json
           if git diff --quiet package.json; then
             echo "Nenhuma mudança no package.json, pulando commit..."
           else
@@ -171,4 +182,5 @@ jobs:
             git commit -m "chore(release): version ${{ env.new_version }}"
             git tag v${{ env.new_version }}
             git push origin main --tags
+            echo "Tag v${{ env.new_version }} criada e enviada!"
           fi
