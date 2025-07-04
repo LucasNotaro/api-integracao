@@ -1,6 +1,6 @@
 {
   "name": "api-integracao",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "API P2 - Integração e Entrega Contínua",
   "main": "src/index.js",
   "scripts": {
