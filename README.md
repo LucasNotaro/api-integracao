@@ -2,7 +2,7 @@
 
 API REST com CRUD de usuários, integração com BetterStack para logs, documentação Swagger e pipeline CI/CD completo.
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
 - **CRUD completo** de usuários
 - **Integração com BetterStack** para logs estruturados
@@ -13,7 +13,7 @@ API REST com CRUD de usuários, integração com BetterStack para logs, document
 - **Banco de dados PostgreSQL** online
 - **Health check** e endpoints de monitoramento
 
-## 📋 Pré-requisitos
+## Pré-requisitos
 
 - Node.js 18+
 - Docker e Docker Compose
@@ -23,7 +23,7 @@ API REST com CRUD de usuários, integração com BetterStack para logs, document
 - Conta no BetterStack
 - Banco de dados PostgreSQL online (ex: Supabase, Railway, etc.)
 
-## 🛠️ Configuração Local
+## Configuração Local
 
 ### 1. Clone o repositório
 
@@ -67,7 +67,7 @@ npm run docker:compose
 npm run dev
 ```
 
-## 🐳 Docker
+## Docker
 
 ### Build da imagem
 
@@ -87,7 +87,7 @@ npm run docker:run
 npm run docker:compose
 ```
 
-## 📚 Endpoints da API
+## Endpoints da API
 
 ### Base
 
@@ -107,7 +107,7 @@ npm run docker:compose
 
 - `GET /test-log` - Testar integração com BetterStack
 
-## 🔧 Configuração do CI/CD
+## Configuração do CI/CD
 
 ### 1. GitHub Secrets
 
@@ -144,27 +144,27 @@ NOTIFICATION_EMAIL=email_para_notificacoes
 - Configure a URL e token
 - Adicione as credenciais no GitHub Secrets
 
-## 🔄 Pipeline CI/CD
+## Pipeline CI/CD
 
 O pipeline inclui as seguintes etapas:
 
 ### CI (Continuous Integration)
 
-- ✅ Checkout do código
-- ✅ Instalação de dependências
-- ✅ Build da aplicação
-- ✅ Versionamento automático
-- ✅ Build da imagem Docker
+- Checkout do código
+- Instalação de dependências
+- Build da aplicação
+- Versionamento automático
+- Build da imagem Docker
 
 ### CD (Continuous Deployment)
 
-- ✅ Push da imagem para Docker Hub
-- ✅ Criação da tag Latest
-- ✅ Atualização de variáveis no Render
-- ✅ Deploy automático no Render
-- ✅ Notificação por email em caso de erro
+- Push da imagem para Docker Hub
+- Criação da tag Latest
+- Atualização de variáveis no Render
+- Deploy automático no Render
+- Notificação por email em caso de erro
 
-## 📊 Logs e Monitoramento
+## Logs e Monitoramento
 
 ### BetterStack
 
@@ -179,7 +179,7 @@ O pipeline inclui as seguintes etapas:
 - Rotação automática
 - Diferentes níveis de log
 
-## 🧪 Testes
+## Testes
 
 ### Teste local
 
@@ -203,7 +203,7 @@ curl http://localhost:3000/test-log
 docker-compose up --build
 ```
 
-## 📝 Padrões de Commit
+## Padrões de Commit
 
 Siga o padrão Conventional Commits:
 
@@ -217,7 +217,7 @@ test: adiciona ou corrige testes
 chore: tarefas de manutenção
 ```
 
-## 🌿 Gitflow
+## Gitflow
 
 - `main` - Código em produção
 - `develop` - Código em desenvolvimento
@@ -225,7 +225,7 @@ chore: tarefas de manutenção
 - `hotfix/*` - Correções urgentes
 - `release/*` - Preparação para release
 
-## 🔐 Segurança
+## Segurança
 
 - Todas as credenciais sensíveis em GitHub Secrets
 - Variáveis de ambiente para configuração
@@ -233,7 +233,7 @@ chore: tarefas de manutenção
 - Validação de entrada de dados
 - Tratamento de erros estruturado
 
-## 📈 Monitoramento
+## Monitoramento
 
 ### Métricas coletadas
 
@@ -249,4 +249,3 @@ chore: tarefas de manutenção
 - Erros na aplicação
 - Tempo de resposta alto
 - Falhas de deploy
-"# Teste de tag autom�tica na esteira" 
